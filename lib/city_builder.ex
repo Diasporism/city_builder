@@ -1,18 +1,12 @@
 defmodule CityBuilder do
-  @moduledoc """
-  Documentation for `CityBuilder`.
-  """
+  use Application
 
-  @doc """
-  Hello world.
+  def start(_type, _options) do
+    children = [
+      ECS.Registry,
+      Entities.Supervisors.People
+    ]
 
-  ## Examples
-
-      iex> CityBuilder.hello()
-      :world
-
-  """
-  def hello do
-    :world
+    Supervisor.start_link(children, name: __MODULE__, strategy: :one_for_one)
   end
 end
