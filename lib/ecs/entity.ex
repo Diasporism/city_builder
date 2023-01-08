@@ -1,11 +1,14 @@
 defmodule ECS.Entity do
   defmacro __using__(options) do
-    quote bind_quoted: [options: Macro.escape(options, unquote: true)] do
-      import ECS.Entity
+    entity          = __CALLER__.module
+    {_, components} = List.keyfind(options, :components, 0, {:components, []})
+    {_, state}      = List.keyfind(options, :state, 0, {:state, quote do: %{}})
 
+    quote bind_quoted: [entity: entity, components: components, state: state], unquote: true do
       use GenServer
 
-      defstruct options
+      @components components
+      @state      state
 
       def child_spec(_arg) do
         %{
@@ -21,14 +24,13 @@ defmodule ECS.Entity do
 
       def init(_arg) do
         {:ok, _} = Registry.register(ECS.Registry, __MODULE__, self())
-        state = struct(__MODULE__, name: Faker.Person.name())
-        {:ok, state}
+        {:ok, %{}}
       end
 
       defmodule Supervisor do
         use DynamicSupervisor
 
-        @entity Enum.at(__ENV__.context_modules, -1)
+        @entity entity
 
         def child_spec(_arg) do
           %{
