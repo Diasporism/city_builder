@@ -1,20 +1,25 @@
 defmodule TimeTest do
   use GenServer
 
+  defstruct prev_time: nil
+
   def init(_arg) do
-    tick()
-    {:ok, []}
+    Process.flag(:priority, :max)
+    state = %TimeTest{prev_time: System.monotonic_time(:millisecond)}
+    tick(state.prev_time)
+    {:ok, state}
   end
 
   def handle_info(_msg, state) do
-    tick()
+    tick(state.prev_time)
     {:noreply, state}
   end
 
-  defp tick do
-    # time = System.monotonic_time(:millisecond) + 1000
+  defp tick(prev_time) do
+    time = prev_time + 1000
     print_time()
-    Process.send_after(self(), :tick, 1000)
+    Process.send_after(self(), :tick, time, abs: true)
+    # Process.send_after(self(), :tick, 1000)
   end
 
   defp print_time do
@@ -25,5 +30,3 @@ defmodule TimeTest do
     IO.inspect(time)
   end
 end
-
-GenServer.start_link(TimeTest, [])
